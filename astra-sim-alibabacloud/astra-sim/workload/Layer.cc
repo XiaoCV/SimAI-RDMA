@@ -156,8 +156,13 @@ void Layer::call(EventType event, CallData* mdata) {
     generator->increase_finished_streams(dataset_streams);
     delete intData;
     #else
+    if (weight_grad_datasets.find(data) != weight_grad_datasets.end()) {
+      delete weight_grad_datasets[data];
+      weight_grad_datasets.erase(data);
+    }
     workload->call(EventType::General, NULL);
     generator->increase_finished_streams(1);
+    delete intData;
     #endif
     return;
   } else if (event == EventType::Input_Grad_Comm_Finished_After_Delay) {
@@ -201,8 +206,13 @@ void Layer::call(EventType event, CallData* mdata) {
     generator->increase_finished_streams(dataset_streams);
     delete intData;
     #else
+    if (input_grad_datasets.find(data) != input_grad_datasets.end()) {
+      delete input_grad_datasets[data];
+      input_grad_datasets.erase(data);
+    }
     workload->call(EventType::General, NULL);
     generator->increase_finished_streams(1);
+    delete intData;
     #endif
     return;
   } else if (event == EventType::Fwd_Comm_Finished_After_Delay) {

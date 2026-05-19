@@ -7,3 +7,5 @@ test/log/
 *.log
 .cur*
 .DS_Store
+ncclFlowModel_EndToEnd.csv
+ncclFlowModel_test1_dimension_utilization_0.csv
