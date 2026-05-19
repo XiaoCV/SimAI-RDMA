@@ -57,6 +57,7 @@ std::string data_rate, link_delay, topology_file, flow_file, trace_file,
 std::string fct_output_file = "fct.txt";
 std::string pfc_output_file = "pfc.txt";
 std::string send_output_file = "send.txt";
+std::string flow_input_trace_file = "/etc/astra-sim/simulation/ns3_flow_input.txt";
 
 double alpha_resume_interval = 55, rp_timer, ewma_gain = 1 / 16;
 double rate_decrease_interval = 4;
@@ -143,6 +144,7 @@ struct FlowInput {
 
 FlowInput flow_input = {0};
 uint32_t flow_num;
+FILE* flow_input_trace_output = nullptr;
 Ipv4Address node_id_to_ip(uint32_t id) {
   return Ipv4Address(0x0b000001 + ((id / 256) * 0x00010000) +
                      ((id % 256) * 0x00000100));
@@ -154,6 +156,50 @@ void get_pfc(FILE *fout, Ptr<QbbNetDevice> dev, uint32_t type) {
   fprintf(fout, "%lu %u %u %u %u\n", Simulator::Now().GetTimeStep(),
           dev->GetNode()->GetId(), dev->GetNode()->GetNodeType(),
           dev->GetIfIndex(), type);
+}
+
+const char* flow_group_type_name(int group_type) {
+  switch (group_type) {
+    case 0: return "TP";
+    case 1: return "DP";
+    case 2: return "PP";
+    case 3: return "EP";
+    case 4: return "DP_EP";
+    case 5: return "NONE";
+    default: return "UNKNOWN";
+  }
+}
+
+const char* flow_collective_type_name(int collective_type) {
+  switch (collective_type) {
+    case 0: return "None";
+    case 1: return "ReduceScatter";
+    case 2: return "AllGather";
+    case 3: return "AllReduce";
+    case 4: return "AllToAll";
+    case 5: return "AllReduceAllToAll";
+    case 6: return "AllReduceNVLS";
+    default: return "UNKNOWN";
+  }
+}
+
+void write_flow_input_trace(uint32_t src, uint32_t dst, uint32_t pg,
+                            uint32_t dport, uint64_t flow_size,
+                            double start_time_seconds, int group_type,
+                            int collective_type) {
+  if (flow_input_trace_output == nullptr) {
+    flow_input_trace_output = fopen(flow_input_trace_file.c_str(), "w");
+    if (flow_input_trace_output == nullptr) {
+      std::cerr << "failed to open flow input trace file: "
+                << flow_input_trace_file << std::endl;
+      return;
+    }
+  }
+  fprintf(flow_input_trace_output, "%u %u %u %u %lu %.9f %s %s\n", src, dst,
+          pg, dport, flow_size, start_time_seconds,
+          flow_group_type_name(group_type),
+          flow_collective_type_name(collective_type));
+  fflush(flow_input_trace_output);
 }
 
 struct QlenDistribution {

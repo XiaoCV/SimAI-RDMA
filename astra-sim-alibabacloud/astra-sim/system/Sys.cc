@@ -1229,12 +1229,13 @@ CollectivePhase Sys::generate_collective_phase(
                         id,
                         layer_num,
                         (RingTopology*)topology,
-                        data_size,
-                        direction,
-                        injection_policy,
-                        boost_mode,
-                        RingFlowModels,
-                        channels.size()));
+                    data_size,
+                    direction,
+                    injection_policy,
+                    boost_mode,
+                    static_cast<MockNccl::GroupType>(comm_ps),
+                    RingFlowModels,
+                    channels.size()));
                 return vn;
               } else if(nccl_info->algorithm == NCCL_ALGO_TREE) {
                 std::shared_ptr<MockNccl::FlowModels> TreeFlowModels;
@@ -1257,6 +1258,7 @@ CollectivePhase Sys::generate_collective_phase(
                         direction,
                         injection_policy,
                         boost_mode,
+                        static_cast<MockNccl::GroupType>(comm_ps),
                         TreeFlowModels,
                         treechannels.size()));
                 return vn;
@@ -1307,6 +1309,7 @@ CollectivePhase Sys::generate_collective_phase(
                         direction,
                         injection_policy,
                         boost_mode,
+                        static_cast<MockNccl::GroupType>(comm_ps),
                         RingFlowModels,
                         treechannels.size()));
                 return vn;

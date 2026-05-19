@@ -63,6 +63,7 @@ class NcclTreeFlowModel : public Algorithm {
   MockNccl::FlowModels _flow_models; 
   uint32_t m_channels;
   uint32_t len_channel;
+  MockNccl::GroupType group_type;
   MockNccl::NcclQps* pQps;
   std::condition_variable judge_exit_cv;
   std::mutex judge_exit_mutex;
@@ -80,6 +81,7 @@ class NcclTreeFlowModel : public Algorithm {
       RingTopology::Direction direction,
       InjectionPolicy injection_policy,
       bool boost_mode,
+      MockNccl::GroupType group_type,
       std::shared_ptr<MockNccl::FlowModels> ptr_flow_models,
       int treechannels);
   virtual void run(EventType event, CallData* data);

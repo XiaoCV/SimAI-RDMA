@@ -31,6 +31,8 @@ struct ncclFlowTag {
   int chunk_id;
   int current_flow_id;    
   int child_flow_id;	
+  int group_type;
+  int collective_type;
   int sender_node;
   int receiver_node;
   uint64_t flow_size;
@@ -43,6 +45,8 @@ struct ncclFlowTag {
     chunk_id(-1),
     current_flow_id(-1),
     child_flow_id(-1),
+    group_type(-1),
+    collective_type(-1),
     sender_node(-1),
     receiver_node(-1),
     flow_size(-1),
@@ -54,6 +58,8 @@ struct ncclFlowTag {
       int _chunk_id,
       int _current_flow_id,
       int _child_flow_id,
+      int _group_type,
+      int _collective_type,
       int _sender_node,
       int _receiver_node,
       uint64_t _flow_size,
@@ -64,6 +70,8 @@ struct ncclFlowTag {
         chunk_id(_chunk_id),
         current_flow_id(_current_flow_id),
         child_flow_id(_child_flow_id),
+        group_type(_group_type),
+        collective_type(_collective_type),
         sender_node(_sender_node),
         receiver_node(_receiver_node),
         flow_size(_flow_size),

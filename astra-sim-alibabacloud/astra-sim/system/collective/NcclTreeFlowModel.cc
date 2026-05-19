@@ -40,6 +40,7 @@ NcclTreeFlowModel::NcclTreeFlowModel(
     RingTopology::Direction direction,
     InjectionPolicy injection_policy,
     bool boost_mode,
+    MockNccl::GroupType group_type,
     std::shared_ptr<MockNccl::FlowModels> ptr_flow_models,
     int treechannels)
     : Algorithm(layer_num){
@@ -55,6 +56,7 @@ NcclTreeFlowModel::NcclTreeFlowModel(
   this->name = Name::Ring;
   this->enabled = true;
   this->m_channels = treechannels;
+  this->group_type = group_type;
   this->judge_exit_flag.store(false);
   this->judge_exit_mutex.unlock();
   this->judge_mutex.unlock();
@@ -577,6 +579,8 @@ bool NcclTreeFlowModel::ready(int channel_id, int flow_id) {
   snd_req.flowTag.current_flow_id = flow_id;
   snd_req.flowTag.chunk_id = flow_model.chunk_id;
   snd_req.flowTag.child_flow_id = -1;
+  snd_req.flowTag.group_type = static_cast<int>(this->group_type);
+  snd_req.flowTag.collective_type = static_cast<int>(this->comType);
   snd_req.flowTag.tree_flow_list =
       this->_flow_models[std::make_pair(channel_id, flow_id)].child_flow_id;
   snd_req.flowTag.sender_node = id;
@@ -709,6 +713,8 @@ bool NcclTreeFlowModel::phy_ready(int channel_id,int flow_id) {
   snd_req.flowTag.current_flow_id = flow_id;
   snd_req.flowTag.chunk_id = flow_model.chunk_id;
   snd_req.flowTag.child_flow_id = -1;
+  snd_req.flowTag.group_type = static_cast<int>(this->group_type);
+  snd_req.flowTag.collective_type = static_cast<int>(this->comType);
   snd_req.flowTag.tree_flow_list =
       this->_flow_models[std::make_pair(channel_id, flow_id)].child_flow_id;
   snd_req.flowTag.sender_node = id;

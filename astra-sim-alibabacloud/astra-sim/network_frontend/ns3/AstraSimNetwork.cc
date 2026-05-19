@@ -25,11 +25,14 @@
 #include "ns3/network-module.h"
 #include "entry.h"
 #include <execinfo.h>
+#include <cerrno>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <queue>
 #include <stdio.h>
 #include <string>
+#include <sys/stat.h>
 #include <thread>
 #include <unistd.h>
 #include <vector>
@@ -45,6 +48,70 @@
 
 using namespace std;
 using namespace ns3;
+
+namespace {
+const char* kSimulationOutputDir = "/etc/astra-sim/simulation";
+const char* kSimulationRootDir = "/etc/astra-sim";
+
+std::string get_basename(const std::string& path) {
+  size_t pos = path.find_last_of("/\\");
+  return pos == std::string::npos ? path : path.substr(pos + 1);
+}
+
+bool ensure_directory(const char* path) {
+  if (mkdir(path, 0755) == 0 || errno == EEXIST) {
+    return true;
+  }
+  std::cerr << "failed to create directory " << path << ": "
+            << std::strerror(errno) << std::endl;
+  return false;
+}
+
+std::string capture_workload_file(const std::string& workload_path) {
+  if (workload_path.empty()) {
+    return workload_path;
+  }
+
+  if (!ensure_directory(kSimulationRootDir) ||
+      !ensure_directory(kSimulationOutputDir)) {
+    return "";
+  }
+
+  std::string captured_path =
+      std::string(kSimulationOutputDir) + "/" + get_basename(workload_path);
+  if (captured_path == workload_path) {
+    return workload_path;
+  }
+
+  std::ifstream src(workload_path, std::ios::binary);
+  if (!src.is_open()) {
+    std::cerr << "failed to open workload file " << workload_path
+              << " for capture" << std::endl;
+    return "";
+  }
+
+  std::ofstream dst(captured_path, std::ios::binary | std::ios::trunc);
+  if (!dst.is_open()) {
+    std::cerr << "failed to open captured workload path " << captured_path
+              << std::endl;
+    return "";
+  }
+
+  dst << src.rdbuf();
+  if (!src.good() && !src.eof()) {
+    std::cerr << "failed while reading workload file " << workload_path
+              << std::endl;
+    return "";
+  }
+  if (!dst.good()) {
+    std::cerr << "failed while writing captured workload file "
+              << captured_path << std::endl;
+    return "";
+  }
+
+  return captured_path;
+}
+}  // namespace
 
 extern std::map<std::pair<std::pair<int, int>,int>, AstraSim::ncclFlowTag> receiver_pending_queue;
 extern uint32_t node_num, switch_num, link_num, trace_num, nvswitch_num, gpus_per_server;
@@ -264,6 +331,12 @@ int main(int argc, char *argv[]) {
   NcclLog->writeLog(NcclLogLevel::INFO," init SimAI.log ");
   if(user_param_prase(argc,argv,&user_param)){
     return 0;
+  }
+  if (!user_param.workload.empty()) {
+    user_param.workload = capture_workload_file(user_param.workload);
+    if (user_param.workload.empty()) {
+      return 1;
+    }
   }
   #ifdef NS3_MTP
   MtpInterface::Enable(user_param.thread);
