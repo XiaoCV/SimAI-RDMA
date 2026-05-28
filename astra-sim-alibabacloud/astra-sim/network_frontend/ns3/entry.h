@@ -310,11 +310,6 @@ void qp_finish(FILE *fout, Ptr<RdmaQueuePair> q) {
           (CustomHeader::GetStaticWholeHeaderSize() -
            IntHeader::GetStaticSize()); 
   uint64_t standalone_fct = base_rtt + total_bytes * 8000000000lu / b;
-  fprintf(fout, "%08x %08x %u %u %lu %lu %lu %lu\n", q->sip.Get(), q->dip.Get(),
-          q->sport, q->dport, q->m_size, q->startTime.GetTimeStep(),
-          (Simulator::Now() - q->startTime).GetTimeStep(), standalone_fct);
-  fflush(fout);
-
   AstraSim::ncclFlowTag flowTag;
   uint64_t notify_size;
   {
@@ -346,6 +341,13 @@ void qp_finish(FILE *fout, Ptr<RdmaQueuePair> q) {
     cs.ExitSection();
     #endif
   }
+  fprintf(fout, "%08x %08x %u %u %lu %lu %lu %lu %s %s\n", q->sip.Get(),
+          q->dip.Get(), q->sport, q->dport, q->m_size,
+          q->startTime.GetTimeStep(),
+          (Simulator::Now() - q->startTime).GetTimeStep(), standalone_fct,
+          flow_group_type_name(flowTag.group_type),
+          flow_collective_type_name(flowTag.collective_type));
+  fflush(fout);
   notify_receiver_receive_data(sid, did, notify_size, flowTag);
 }
 
